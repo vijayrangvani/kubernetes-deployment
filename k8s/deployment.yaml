@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment 
+  namespace: production
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+        - name: fastapi
+          image: docker-fastapi:v5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_ENV
+              valueFrom: 
+                configMapKeyRef:
+                  name: fastapi-configmap
+                  key: APP_ENV
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: fastapi-secret
+                  key: API_KEY
+
+          volumeMounts:
+            - name: fastapi-storage
+              mountPath: /app/data
+
+          ports:
+            - containerPort: 8000
+
+      volumes:
+        - name: fastapi-storage
+          persistentVolumeClaim:
+            claimName: fastapi-pvc
